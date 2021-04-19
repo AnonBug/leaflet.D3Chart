@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
+    <script src="../node_modules/leaflet/dist/leaflet-src.js"></script>
+    <script src="../node_modules/d3/dist/d3.js"></script>
+    <style>
+        * {
+            margin: 0;
+        }
+
+        #mapid {
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mapid"></div>
+    <script>
+        // 新建地图对象
+        var mymap = L.map('mapid').setView([30.5123836308, 114.337991415], 10);
+
+        // 向地图对象添加图层
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            id: 'mapbox/satellite-v9',
+            accessToken: 'pk.eyJ1IjoibWItYnVnIiwiYSI6ImNrOGVhOGhpcDAwb2EzbXFzZXBsNnpqcXMifQ.7AfUit-gumiVTrDVJPlYJg'
+        }).addTo(mymap);
+
+
+
+        const cities = {
+            '江夏': { centerX: 114.332901277, centerY: 30.2500939337 },
+            '汉南': { centerX: 113.939266839, centerY: 30.2836405812 },
+            '洪山': { centerX: 114.418931664, centerY: 30.5380326722 },
+            '蔡甸': { centerX: 113.962386252, centerY: 30.4618808196 },
+            '汉阳': { centerX: 114.204984822, centerY: 30.5432698704 },
+            '江岸': { centerX: 114.320291902, centerY: 30.6425822266 },
+            '新洲': { centerX: 114.760408705, centerY: 30.8003425476 },
+            '江汉': { centerX: 114.257044071, centerY: 30.6055671463 },
+            '东西湖': { centerX: 114.080018078, centerY: 30.6897823785 },
+            '黄陂': { centerX: 114.36589875, centerY: 30.9966464787 },
+            '武昌': { centerX: 114.337991415, centerY: 30.5123836308 },
+            '青山': { centerX: 114.446173947, centerY: 30.6230651263 },
+            '硚口': { centerX: 114.209512067, centerY: 30.5997036292 }
+        }
+        fetch('./assets/statistic_population.csv')
+            .then(res => res.text())
+            .then(res => {
+                let data = res.split("\r\n").map(item => item.split(','))
+                let dataset = {}
+                for (let i = 1; i < data.length; i++) {
+                    dataset[data[i][0]] = data[i].slice(1).map(item => Number(item))
+                }
+
+                console.log(dataset);
+                let index = 0
+                const layerGroup = []
+                for (let [v, k] of Object.entries(dataset)) {
+                    if (!v) continue;
+                    // console.log({ v, k })
+
+                    let coord = cities[v] // 坐标
+                    let className = `my-div-icon-${index++}` // 自定义类
+                    var myIcon = L.divIcon({
+                        // 给 div 一个类名
+                        className
+                    });
+                    let marker = L.marker([coord.centerY, coord.centerX], { icon: myIcon }).addTo(mymap)
+                    layerGroup.push(marker)
+
+                    // 当地图被移除后, 再次添加时, 通过 d3 加入的元素就会丢失, 解决办法是监听图层变化事件, 在添加到图层时再次渲染
+                    marker.on('add', () => {
+                        console.log('地图添加事件执行了');
+                        //Width and height
+                        var w = 80;
+                        var h = 80;
+
+                        let static = [5, 10, 20, 45, 6, 25];
+
+                        var outerRadius = w / 2;
+                        var innerRadius = 0;
+                        var arc = d3.arc()
+                            .innerRadius(innerRadius)
+                            .outerRadius(outerRadius);
+
+                        var pie = d3.pie();
+
+                        //Easy colors accessible via a 10-step ordinal scale
+                        var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+                        // 在自定义 div 中创建 svg 要素
+                        var svg = d3.select('.' + className)
+                            .append("svg")
+                            .attr("width", w)
+                            .attr("height", h)
+                            // 对 svg 宽高进行移动, 以使其中心点对准需要放置的位置
+                            .attr('transform', `translate(${-w / 2}, ${-h / 2})`)
+                        console.log(svg);
+                        //Set up groups
+                        var arcs = svg.selectAll("g.arc")
+                            .data(pie(static))
+                            .enter()
+                            .append("g")
+                            .attr("class", "arc")
+                            .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+                        //Draw arc paths
+                        arcs.append("path")
+                            .attr("fill", function (d, i) {
+                                return color(i);
+                            })
+                            .attr("d", arc);
+
+                        //Labels
+                        arcs.append("text")
+                            .attr("transform", function (d) {
+                                return "translate(" + arc.centroid(d) + ")";
+                            })
+                            .attr("text-anchor", "middle")
+                            .text(function (d) {
+                                return d.value;
+                            });
+                    })
+                    // console.log(d3)
+
+                    // //Width and height
+                    // var w = 80;
+                    // var h = 80;
+
+                    // let static = [5, 10, 20, 45, 6, 25];
+
+                    // var outerRadius = w / 2;
+                    // var innerRadius = 0;
+                    // var arc = d3.arc()
+                    //     .innerRadius(innerRadius)
+                    //     .outerRadius(outerRadius);
+
+                    // var pie = d3.pie();
+
+                    // //Easy colors accessible via a 10-step ordinal scale
+                    // var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+                    // // 在自定义 div 中创建 svg 要素
+                    // var svg = d3.select('.' + className)
+                    //     .append("svg")
+                    //     .attr("width", w)
+                    //     .attr("height", h)
+                    //     // 对 svg 宽高进行移动, 以使其中心点对准需要放置的位置
+                    //     .attr('transform', `translate(${-w / 2}, ${-h / 2})`)
+                    // console.log(svg);
+                    // //Set up groups
+                    // var arcs = svg.selectAll("g.arc")
+                    //     .data(pie(static))
+                    //     .enter()
+                    //     .append("g")
+                    //     .attr("class", "arc")
+                    //     .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+                    // //Draw arc paths
+                    // arcs.append("path")
+                    //     .attr("fill", function (d, i) {
+                    //         return color(i);
+                    //     })
+                    //     .attr("d", arc);
+
+                    // //Labels
+                    // arcs.append("text")
+                    //     .attr("transform", function (d) {
+                    //         return "translate(" + arc.centroid(d) + ")";
+                    //     })
+                    //     .attr("text-anchor", "middle")
+                    //     .text(function (d) {
+                    //         return d.value;
+                    //     });
+
+                    // break;
+
+                }
+
+                window.features = L.featureGroup(layerGroup)
+                // features.addTo(mymap)
+                mymap.addLayer(features)
+                // mymap.removeLayer(features)
+                mymap.addLayer(features)
+
+            })
+    </script>
+</body>
+
+</html>

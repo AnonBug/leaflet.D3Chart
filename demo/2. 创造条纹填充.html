@@ -1,0 +1,116 @@
+<!--
+ * @Author: zyc
+ * @Description: file content
+ * @Date: 2021-04-18 20:08:00
+ * @LastEditTime: 2021-04-18 20:44:16
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../node_modules/d3/dist/d3.js"></script>
+    <script src="https://unpkg.com/textures@1.2.0/dist/textures.js"></script>
+</head>
+
+<body>
+    <script>
+        // const svg = d3
+        //     .select('body')
+        //     .append("svg");
+
+        const texture = textures
+            .lines()
+            .heavier()
+            .stroke("darkorange")
+            .background("white");
+
+
+        // svg
+        //     .append('circle')
+        //     .attr('r', 200)
+        //     .style('fill', texture.url());
+
+        //Width and height
+        var w = 200;
+        var h = 200;
+
+        var dataset = [5, 10, 20, 45, 6, 25];
+
+        var outerRadius = w / 2;
+        var innerRadius = w / 3;
+        var arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius);
+
+        var pie = d3.pie();
+
+        //Easy colors accessible via a 10-step ordinal scale
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+        // 在自定义 div 中创建 svg 要素
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h)
+        // 对 svg 宽高进行移动, 以使其中心点对准需要放置的位置
+        // .attr('transform', `translate(${-w / 2}, ${-h / 2})`)
+
+        //Set up groups
+        var arcs = svg.selectAll("g.arc")
+            .data(pie(dataset))
+            .enter()
+            .append("g")
+            .attr("class", "arc")
+            .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+        //Draw arc paths
+
+        svg.call(texture);
+
+        arcs.append("path")
+            .attr("fill", function (d, i) {
+                if (i === 2) return texture.url()
+                return color(i);
+            })
+            .attr("d", arc);
+
+        //Labels
+        arcs.append("text")
+            .attr("transform", function (d) {
+                return "translate(" + arc.centroid(d) + ")";
+            })
+            .attr("text-anchor", "middle")
+            .text(function (d) {
+                // return d.value;
+            });
+
+        const svg2 = d3.select("body")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h)
+        const texture2 = textures
+            .lines()
+            // .heavier()
+            .size(8)
+            .strokeWidth(1)
+            .orientation("3/8")
+            .stroke("darkorange")
+            .background("white");
+        svg2.call(texture2)
+        svg2.selectAll('circle')
+            .data([1])
+            .enter()
+            .append('circle')
+            .attr('cx', 40)
+            .attr('cy', 40)
+            .attr('r', 40)
+            .attr('stroke', 'orange')
+            .attr('fill', texture2.url())
+    </script>
+</body>
+
+</html>

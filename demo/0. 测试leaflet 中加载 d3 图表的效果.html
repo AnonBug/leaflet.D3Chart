@@ -1,0 +1,143 @@
+<!--
+ * @Author: zyc
+ * @Description: file content
+ * @Date: 2021-04-18 19:10:14
+ * @LastEditTime: 2021-04-18 19:35:42
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
+    <script src="../node_modules/leaflet/dist/leaflet-src.js"></script>
+    <script src="../node_modules/d3/dist/d3.js"></script>
+    <style>
+        * {
+            margin: 0;
+        }
+
+        #mapid {
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mapid"></div>
+    <script>
+        // 新建地图对象
+        var mymap = L.map('mapid').setView([51.5, -0.09], 13);
+
+        // 向地图对象添加图层
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            // attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+            // maxZoom: 18,
+            id: 'mapbox/satellite-v9',
+            // tileSize: 512,
+            // zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoibWItYnVnIiwiYSI6ImNrOGVhOGhpcDAwb2EzbXFzZXBsNnpqcXMifQ.7AfUit-gumiVTrDVJPlYJg'
+        }).addTo(mymap);
+
+        // 添加点、线、面标记
+        // var marker = L.marker([51.5, -0.09]).addTo(mymap);
+
+        var circle = L.circle([51.508, -0.11], {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.5,
+            radius: 500
+        }).addTo(mymap);
+
+        var polygon = L.polygon([
+            [51.509, -0.08],
+            [51.503, -0.06],
+            [51.51, -0.047]
+        ]).addTo(mymap);
+
+        // 添加弹窗
+        // marker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+        // circle.bindPopup("I am a circle.").openPopup();
+        // polygon.bindPopup("I am a polygon.").openPopup();
+
+        // var popup = L.popup()
+        //     .setLatLng([51.5, -0.09])
+        //     .setContent("I am a standalone popup.")
+        //     .openOn(mymap);
+
+        // 添加监听事件
+        function onMapClick(e) {
+            console.log({ e })
+            // alert("You clicked the map at " + e.latlng);
+            L.popup()
+                .setLatLng([e.latlng.lat, e.latlng.lng])
+                .setContent(`${e.latlng.lat}, ${e.latlng.lng}`)
+                .openOn(mymap);
+        }
+
+        mymap.on('click', onMapClick);
+
+        var myIcon = L.divIcon({
+            // 给 div 一个类名
+            className: 'my-div-icon',
+        });
+        L.marker([51.5, -0.09], { icon: myIcon }).addTo(mymap);
+
+        console.log(d3)
+
+        //Width and height
+        var w = 200;
+        var h = 200;
+
+        var dataset = [5, 10, 20, 45, 6, 25];
+
+        var outerRadius = w / 2;
+        var innerRadius = w / 3;
+        var arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius);
+
+        var pie = d3.pie();
+
+        //Easy colors accessible via a 10-step ordinal scale
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+        // 在自定义 div 中创建 svg 要素
+        var svg = d3.select(".my-div-icon")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h)
+            // 对 svg 宽高进行移动, 以使其中心点对准需要放置的位置
+            .attr('transform', `translate(${-w / 2}, ${-h / 2})`)
+
+        //Set up groups
+        var arcs = svg.selectAll("g.arc")
+            .data(pie(dataset))
+            .enter()
+            .append("g")
+            .attr("class", "arc")
+            .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+        //Draw arc paths
+        arcs.append("path")
+            .attr("fill", function (d, i) {
+                return color(i);
+            })
+            .attr("d", arc);
+
+        //Labels
+        arcs.append("text")
+            .attr("transform", function (d) {
+                return "translate(" + arc.centroid(d) + ")";
+            })
+            .attr("text-anchor", "middle")
+            .text(function (d) {
+                return d.value;
+            });
+    </script>
+</body>
+
+</html>
