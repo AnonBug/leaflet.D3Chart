@@ -2,7 +2,7 @@
  * @Author: zyc
  * @Description: file content
  * @Date: 2021-04-18 20:48:19
- * @LastEditTime: 2021-04-19 12:07:06
+ * @LastEditTime: 2021-04-19 18:53:13
  */
 (function (factory) {
     // 这里似乎是在根据环境判断如何引入
@@ -43,14 +43,14 @@
         let markers = [] // 存储生成的 marker 图层
         for (let i = 0; i < dataset.length; i++) {
             let {
-                x,
-                y,
+                lat,
+                lng,
                 data
             } = dataset[i]
 
             // 使用 divIcon 向 leaflet 添加 div 容器, 后面需要依赖这个容器追加 svg 图表
             let className = `my-div-icon-${i}` // 自定义类
-            let marker = L.marker([y, x], {
+            let marker = L.marker([lat, lng], {
                 icon: L.divIcon({
                     className
                 })
@@ -70,6 +70,7 @@
                     .attr("height", h)
                     // 对 svg 宽高进行移动, 以使其中心点对准需要放置的位置
                     .attr('transform', `translate(${-w / 2}, ${-h / 2})`)
+                    .style('overflow', 'visible')
 
                 // 根据绘制类型, 渲染不同的图表形式
                 switch (type) {
@@ -122,11 +123,14 @@
         // 绘制路径
         arcs.append("path")
             .attr("fill", (d, i) => color(i))
+            .transition()
             .attr("d", arc)
 
         // 添加注记
         arcs.append("text")
             .attr("transform", d => `translate(${arc.centroid(d)})`)
+            .attr('font-size', '11px')
+            .attr('fill', 'white')
             .attr("text-anchor", "middle")
             .text(d => d.value)
     }
@@ -165,14 +169,18 @@
             .attr('x', (d, i) => xScale(i)) // x 定位
             .attr('y', d => h - yScale(d)) // y 定位
             .attr('width', xScale.bandwidth()) // 宽度
-            .attr('height', d => yScale(d)) // 高度
             .attr('fill', (d, i) => color(i)) // 色彩
+            .transition()
+            .attr('height', d => yScale(d)) // 高度
 
         // 添加注记
         bars.append("text")
+            .attr('x', (d, i) => xScale.bandwidth() / 2)
+            .attr('y', d => 14)
             .attr("transform", (d, i) => `translate(${xScale(i)}, ${h - yScale(d)})`)
             .text(d => d)
             .attr('font-size', '11px')
             .attr('fill', 'white')
+            .attr("text-anchor", "middle")
     }
 }))

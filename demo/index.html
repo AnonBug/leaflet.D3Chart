@@ -2,7 +2,7 @@
  * @Author: zyc
  * @Description: file content
  * @Date: 2021-04-18 20:45:58
- * @LastEditTime: 2021-04-19 18:12:39
+ * @LastEditTime: 2021-04-19 18:50:42
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -25,21 +25,23 @@
             margin: 0;
         }
 
-        #container{
+        #container {
             height: 700px;
             width: 700px;
             margin: 50px auto;
             display: flex;
             flex-direction: column;
         }
-        #btns{
-            padding:10px;
+
+        #btns {
+            padding: 10px;
         }
 
         #mapid {
-            flex:auto;
+            flex: auto;
         }
-        button{
+
+        button {
             cursor: pointer;
         }
     </style>
@@ -64,42 +66,40 @@
             id: 'mapbox/satellite-v9',
             accessToken: 'pk.eyJ1IjoibWItYnVnIiwiYSI6ImNrOGVhOGhpcDAwb2EzbXFzZXBsNnpqcXMifQ.7AfUit-gumiVTrDVJPlYJg'
         }).addTo(mymap);
+        
+        let dataset = [], features = {}
 
-        const cities = {
-            '江夏': { centerX: 114.332901277, centerY: 30.2500939337 },
-            '汉南': { centerX: 113.939266839, centerY: 30.2836405812 },
-            '洪山': { centerX: 114.418931664, centerY: 30.5380326722 },
-            '蔡甸': { centerX: 113.962386252, centerY: 30.4618808196 },
-            '汉阳': { centerX: 114.204984822, centerY: 30.5432698704 },
-            '江岸': { centerX: 114.320291902, centerY: 30.6425822266 },
-            '新洲': { centerX: 114.760408705, centerY: 30.8003425476 },
-            '江汉': { centerX: 114.257044071, centerY: 30.6055671463 },
-            '东西湖': { centerX: 114.080018078, centerY: 30.6897823785 },
-            '黄陂': { centerX: 114.36589875, centerY: 30.9966464787 },
-            '武昌': { centerX: 114.337991415, centerY: 30.5123836308 },
-            '青山': { centerX: 114.446173947, centerY: 30.6230651263 },
-            '硚口': { centerX: 114.209512067, centerY: 30.5997036292 }
-        }
-        fetch('../assets/statistic_population.csv')
-            .then(res => res.text())
-            .then(res => {
-                let data = res.split("\r\n").map(item => item.split(','))
-                // 处理数据
-                let dataset = []
-                for (let i = 1; i < data.length; i++) {
-                    if (!data[i][0]) continue;
-                    let obj = {}
-                    obj.x = cities[data[i][0]].centerX
-                    obj.y = cities[data[i][0]].centerY
-                    obj.data = data[i].slice(1, 3).map(item => Number(item))
-                    dataset.push(obj)
-                }
-
-                // 传参
+        // 标准数据格式
+        fetch('../assets/test.json')
+            .then(res => res.json())
+            .then(data => {
+                dataset = data
                 features = L.D3Chart(dataset, { type: 'pie', scale: 1, width_height: 3 / 4 })
-
                 mymap.addLayer(features)
             })
+
+        let btns = document.querySelector('#btns') 
+        btns.addEventListener('click', (e) => {
+            const target = e.target
+            if (target.tagName === 'BUTTON') {
+                console.log(target);
+                let type = 'pie'
+                switch(target.innerText) {
+                    case '饼状':
+                        type = 'pie'
+                        break;
+                    case '环状':
+                        type = 'ring'
+                        break;
+                    case '柱状':
+                        type = 'bar'
+                        break;
+                }   
+                mymap.removeLayer(features)
+                features = L.D3Chart(dataset, {type})
+                mymap.addLayer(features)
+            }
+        })
     </script>
 </body>
 
